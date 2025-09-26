@@ -1,36 +1,80 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Link de Pagamento - InfinitePay
 
-## Getting Started
+Um site minimalista para criar links de pagamento de forma simples e rápida, integrado com a InfinitePay.
 
-First, run the development server:
+## Funcionalidades
+
+- ✨ Interface minimalista e intuitiva
+- 💳 Geração de links de pagamento personalizados
+- 📦 Opção de associar produtos aos links
+- 🖼️ Suporte para imagens de produtos
+- 🔗 Integração com checkout da InfinitePay
+
+## Como usar
+
+1. **Preencha o valor**: Digite o valor do pagamento em reais
+2. **Informe o recebedor**: Digite o handle do usuário que receberá o pagamento
+3. **Produto (opcional)**: Clique em "Associar produto ao link" para adicionar informações do produto
+4. **Gere o link**: Clique em "Gerar Link de Pagamento"
+5. **Compartilhe**: Copie o link gerado e envie para o pagador
+
+## Desenvolvimento
+
+### Pré-requisitos
+
+- Node.js 18+
+- npm ou yarn
+
+### Instalação
 
 ```bash
+# Clone o repositório
+git clone [seu-repositorio]
+
+# Entre na pasta
+cd linkrastreavel
+
+# Instale as dependências
+npm install
+
+# Execute o servidor de desenvolvimento
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Estrutura do Projeto
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+src/
+├── app/
+│   ├── api/
+│   │   └── generate-payment-link/    # API para gerar links
+│   ├── layout.tsx                    # Layout global
+│   └── page.tsx                      # Página principal
+├── components/
+│   ├── PaymentLinkForm.tsx           # Formulário principal
+│   ├── ProductModal.tsx              # Modal de produto
+│   └── GeneratedLink.tsx             # Exibição do link gerado
+└── types/
+    └── index.ts                      # Tipos TypeScript
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Integração InfinitePay
 
-## Learn More
+O site utiliza a API de checkout da InfinitePay para gerar links de pagamento. Quando um produto não é especificado, usa-se "Link de Pagamento" como descrição padrão.
 
-To learn more about Next.js, take a look at the following resources:
+### Fluxo de Pagamento
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Usuário preenche o formulário
+2. Sistema gera um `order_nsu` único
+3. API da InfinitePay cria o link de checkout
+4. Link é exibido para o usuário
+5. Pagador acessa o link e realiza o pagamento
+6. Valor é creditado para o handle especificado
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Tecnologias Utilizadas
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Next.js 14 (App Router)
+- TypeScript
+- Tailwind CSS
+- Lucide React (ícones)
+- API InfinitePay
