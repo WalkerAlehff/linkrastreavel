@@ -5,8 +5,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Link de Pagamento - InfinitePay",
-  description: "Crie links de pagamento de forma simples e rápida",
+  title: "ShazLink - Links de Pagamento Rápidos",
+  description: "Crie links de pagamento de forma simples e rápida com ShazLink",
 };
 
 export default function RootLayout({

@@ -1,4 +1,4 @@
-# Link de Pagamento - InfinitePay
+# ShazLink ⚡
 
 Um site minimalista para criar links de pagamento de forma simples e rápida, integrado com a InfinitePay.
 

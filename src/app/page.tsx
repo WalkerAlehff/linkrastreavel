@@ -54,9 +54,27 @@ export default function Home() {
     <div className="min-h-screen bg-gray-50">
       <main className="container mx-auto px-4 py-16">
         <div className="max-w-lg mx-auto">
-          <h1 className="text-3xl font-semibold text-gray-900 text-center mb-8">
-            Criar Link de Pagamento
-          </h1>
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <svg 
+                className="w-10 h-10 text-blue-600" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d="M13 10V3L4 14h7v7l9-11h-7z" 
+                />
+              </svg>
+              <span className="text-4xl font-bold text-gray-900">ShazLink</span>
+            </div>
+            <h1 className="text-2xl font-semibold text-gray-700">
+              Criar Link de Pagamento
+            </h1>
+          </div>
           
           <PaymentLinkForm 
             onSubmit={handleGenerateLink} 
