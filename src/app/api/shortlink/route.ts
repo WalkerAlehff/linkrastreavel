@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-// Armazenamento em memória (em produção, use um banco de dados)
-const linkStorage = new Map<string, string>();
+import { saveLink, getLink, linkExists } from '@/lib/kv-storage';
 
 // Função para gerar código curto único
 function generateShortCode(): string {
@@ -27,12 +25,12 @@ export async function POST(request: NextRequest) {
 
     // Gerar código único
     let shortCode = generateShortCode();
-    while (linkStorage.has(shortCode)) {
+    while (await linkExists(shortCode)) {
       shortCode = generateShortCode();
     }
 
     // Armazenar
-    linkStorage.set(shortCode, url);
+    await saveLink(shortCode, url);
 
     // Retornar URL curta
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || request.headers.get('host') || 'localhost:3000';
@@ -66,7 +64,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const originalUrl = linkStorage.get(code);
+  const originalUrl = await getLink(code);
   
   if (!originalUrl) {
     return NextResponse.json(
