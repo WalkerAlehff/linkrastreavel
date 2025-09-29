@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { saveLink, getLink, linkExists } from '@/lib/kv-storage';
+import { saveLink, getLink, linkExists } from '@/lib/link-storage';
 
 // Função para gerar código curto único
 function generateShortCode(): string {
