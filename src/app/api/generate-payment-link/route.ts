@@ -8,14 +8,25 @@ export async function POST(request: NextRequest) {
     // Validar dados
     if (!data.amount || !data.recipientHandle) {
       return NextResponse.json(
-        { error: 'Dados inválidos' },
+        { error: 'Dados inválidos: valor e handle do recebedor são obrigatórios' },
         { status: 400 }
       );
     }
 
+    // Validar valor mínimo (1 centavo)
+    if (data.amount <= 0) {
+      return NextResponse.json(
+        { error: 'O valor deve ser maior que zero' },
+        { status: 400 }
+      );
+    }
+
+    // Remover @ do handle se presente
+    const handle = data.recipientHandle.replace('@', '');
+
     // Preparar dados do checkout
     const checkoutData = {
-      handle: data.recipientHandle,
+      handle: handle, // Usar handle sem @
       order_nsu: `LINK_${Date.now()}`,
       items: [
         {
@@ -26,12 +37,11 @@ export async function POST(request: NextRequest) {
       ]
     };
 
-    // Se houver informações do produto, adicionar à descrição
-    if (data.product?.imageUrl) {
-      // Nota: A API da InfinitePay não suporta imagens diretamente no checkout
-      // Mas podemos incluir a URL na descrição ou em metadados
-      checkoutData.items[0].description += ` (${data.product.imageUrl})`;
-    }
+    // Nota: A API da InfinitePay não suporta imagens diretamente no checkout
+    // A URL da imagem é armazenada apenas no frontend para exibição
+
+    // Log dos dados sendo enviados (remover em produção)
+    console.log('Enviando para InfinitePay:', JSON.stringify(checkoutData, null, 2));
 
     // Fazer chamada para API da InfinitePay
     const response = await fetch('https://api.infinitepay.io/invoices/public/checkout/links', {
@@ -43,11 +53,20 @@ export async function POST(request: NextRequest) {
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      console.error('Erro da API InfinitePay:', error);
+      const errorText = await response.text();
+      console.error('Erro da API InfinitePay:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText,
+        checkoutData: checkoutData
+      });
+      
       return NextResponse.json(
-        { error: 'Erro ao gerar link de pagamento' },
-        { status: 500 }
+        { 
+          error: 'Erro ao gerar link de pagamento',
+          details: process.env.NODE_ENV === 'development' ? errorText : undefined
+        },
+        { status: response.status }
       );
     }
 
