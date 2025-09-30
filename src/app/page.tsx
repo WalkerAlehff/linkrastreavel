@@ -25,23 +25,7 @@ export default function Home() {
       }
 
       const result = await response.json();
-      
-      // Encurtar o link
-      const shortResponse = await fetch('/api/shortlink', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ url: result.url }),
-      });
-
-      if (shortResponse.ok) {
-        const shortData = await shortResponse.json();
-        setGeneratedLink(shortData.shortUrl);
-      } else {
-        // Se falhar o encurtamento, usar o link original
-        setGeneratedLink(result.url);
-      }
+      setGeneratedLink(result.url);
     } catch (error) {
       console.error('Erro:', error);
       alert('Erro ao gerar link de pagamento. Tente novamente.');

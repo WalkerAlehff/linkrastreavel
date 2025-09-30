@@ -8,7 +8,7 @@ Um site minimalista para criar links de pagamento de forma simples e rápida, in
 - 💳 Geração de links de pagamento personalizados
 - 📦 Opção de associar produtos aos links
 - 🖼️ Suporte para imagens de produtos
-- 🔗 Integração com checkout da InfinitePay
+- 🔗 Integração direta com checkout da InfinitePay
 
 ## Como usar
 

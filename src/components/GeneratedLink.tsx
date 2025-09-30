@@ -20,9 +20,6 @@ export default function GeneratedLink({ url }: GeneratedLinkProps) {
     }
   };
 
-  // Verificar se é um link curto
-  const isShortLink = url.includes('/p/');
-
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">
@@ -34,7 +31,7 @@ export default function GeneratedLink({ url }: GeneratedLinkProps) {
           <div className="flex items-center gap-2 mb-1">
             <Link2 size={16} className="text-gray-500" />
             <span className="text-sm font-medium text-gray-700">
-              {isShortLink ? 'Link Encurtado' : 'Link de Pagamento'}
+              Link de Pagamento
             </span>
           </div>
           <div className="bg-gray-50 rounded-md p-4">
