@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Package, X, Link } from 'lucide-react';
 import ProductModal from './ProductModal';
 import { PaymentLinkData, Product } from '@/types';
@@ -15,6 +15,84 @@ export default function PaymentLinkForm({ onSubmit, isLoading }: PaymentLinkForm
   const [recipientHandle, setRecipientHandle] = useState('');
   const [product, setProduct] = useState<Product | null>(null);
   const [showProductModal, setShowProductModal] = useState(false);
+  const [isHandleAutoDetected, setIsHandleAutoDetected] = useState(false);
+
+  useEffect(() => {
+    // Detectar handle do usuário quando aberto pelo app
+    const detectUserHandle = () => {
+      // Método 1: Verificar query parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      const handleFromUrl = urlParams.get('handle') || urlParams.get('user') || urlParams.get('username');
+      
+      // Log para debug
+      if (urlParams.toString()) {
+        console.log('Query parameters detectados:', urlParams.toString());
+      }
+      
+      if (handleFromUrl) {
+        setRecipientHandle(handleFromUrl.replace('@', ''));
+        setIsHandleAutoDetected(true);
+        console.log('Handle detectado via URL:', handleFromUrl);
+        return;
+      }
+
+      // Método 2: Verificar se há dados no sessionStorage/localStorage
+      const storedHandle = sessionStorage.getItem('userHandle') || localStorage.getItem('userHandle');
+      if (storedHandle) {
+        setRecipientHandle(storedHandle.replace('@', ''));
+        setIsHandleAutoDetected(true);
+        return;
+      }
+
+      // Método 3: Escutar mensagens do app pai (postMessage)
+      const handleMessage = (event: MessageEvent) => {
+        // Log para debug (remover em produção)
+        console.log('Mensagem recebida:', {
+          origin: event.origin,
+          data: event.data
+        });
+
+        // Verificar origem segura (ajustar domínio conforme necessário)
+        // Aceitar também localhost para desenvolvimento
+        const allowedOrigins = [
+          'https://app.infinitepay.io',
+          'https://infinitepay.io',
+          'http://localhost:3000',
+          'http://localhost:3001'
+        ];
+
+        if (!allowedOrigins.includes(event.origin)) {
+          console.warn('Mensagem rejeitada de origem não autorizada:', event.origin);
+          return;
+        }
+
+        if (event.data && (event.data.handle || event.data.userHandle || event.data.username)) {
+          const handle = event.data.handle || event.data.userHandle || event.data.username;
+          setRecipientHandle(handle.replace('@', ''));
+          setIsHandleAutoDetected(true);
+          
+          // Salvar no sessionStorage para uso futuro
+          sessionStorage.setItem('userHandle', handle);
+          
+          console.log('Handle detectado via postMessage:', handle);
+        }
+      };
+
+      window.addEventListener('message', handleMessage);
+
+      // Enviar mensagem solicitando o handle (caso o app pai esteja esperando)
+      if (window.parent !== window) {
+        window.parent.postMessage({ type: 'REQUEST_USER_HANDLE' }, '*');
+      }
+
+      // Cleanup
+      return () => {
+        window.removeEventListener('message', handleMessage);
+      };
+    };
+
+    detectUserHandle();
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,6 +143,11 @@ export default function PaymentLinkForm({ onSubmit, isLoading }: PaymentLinkForm
         <div>
           <label htmlFor="handle" className="block text-sm font-medium text-gray-700 mb-2">
             Handle do Recebedor
+            {isHandleAutoDetected && (
+              <span className="ml-2 text-xs text-green-600 font-normal">
+                (detectado automaticamente)
+              </span>
+            )}
           </label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
@@ -74,8 +157,13 @@ export default function PaymentLinkForm({ onSubmit, isLoading }: PaymentLinkForm
               type="text"
               id="handle"
               value={recipientHandle}
-              onChange={(e) => setRecipientHandle(e.target.value)}
-              className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+              onChange={(e) => {
+                setRecipientHandle(e.target.value);
+                setIsHandleAutoDetected(false); // Remove o indicador quando o usuário editar
+              }}
+              className={`w-full pl-8 pr-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 ${
+                isHandleAutoDetected ? 'border-green-300 bg-green-50' : 'border-gray-300'
+              }`}
               placeholder="usuario"
               required
             />
