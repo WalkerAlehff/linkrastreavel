@@ -19,7 +19,7 @@ export default function PaymentLinkForm({ onSubmit, isLoading }: PaymentLinkForm
 
   useEffect(() => {
     // Detectar handle do usuário quando aberto pelo app
-    const detectUserHandle = () => {
+    const detectUserHandle = async () => {
       // Log completo do ambiente
       console.log('=== Iniciando detecção de handle ===');
       console.log('URL completa:', window.location.href);
@@ -27,7 +27,37 @@ export default function PaymentLinkForm({ onSubmit, isLoading }: PaymentLinkForm
       console.log('Referrer:', document.referrer);
       console.log('Em iframe?:', window.parent !== window);
       
-      // Método 1: Verificar query parameters
+      // Método 1: Tentar usar getUserData() da InfinitePay
+      if (typeof (window as any).getUserData === 'function') {
+        try {
+          console.log('Função getUserData encontrada! Chamando...');
+          const userData = await (window as any).getUserData();
+          console.log('Dados do usuário recebidos:', userData);
+          
+          if (userData) {
+            // Verificar diferentes propriedades possíveis para o handle
+            const handle = userData.handle || 
+                          userData.username || 
+                          userData.user || 
+                          userData.merchant ||
+                          userData.seller ||
+                          userData.vendedor;
+            
+            if (handle) {
+              setRecipientHandle(String(handle).replace('@', ''));
+              setIsHandleAutoDetected(true);
+              console.log('Handle detectado via getUserData():', handle);
+              return;
+            }
+          }
+        } catch (error) {
+          console.error('Erro ao chamar getUserData():', error);
+        }
+      } else {
+        console.log('Função getUserData() não encontrada no window');
+      }
+      
+      // Método 2: Verificar query parameters
       const urlParams = new URLSearchParams(window.location.search);
       
       // Verificar TODOS os parâmetros possíveis
@@ -55,7 +85,7 @@ export default function PaymentLinkForm({ onSubmit, isLoading }: PaymentLinkForm
         return;
       }
 
-      // Método 2: Verificar se há dados no sessionStorage/localStorage
+      // Método 3: Verificar se há dados no sessionStorage/localStorage
       const storedHandle = sessionStorage.getItem('userHandle') || localStorage.getItem('userHandle');
       if (storedHandle) {
         setRecipientHandle(storedHandle.replace('@', ''));
@@ -63,7 +93,7 @@ export default function PaymentLinkForm({ onSubmit, isLoading }: PaymentLinkForm
         return;
       }
 
-      // Método 3: Escutar mensagens do app pai (postMessage)
+      // Método 4: Escutar mensagens do app pai (postMessage)
       const handleMessage = (event: MessageEvent) => {
         // Log para debug (remover em produção)
         console.log('Mensagem recebida:', {
@@ -166,7 +196,17 @@ export default function PaymentLinkForm({ onSubmit, isLoading }: PaymentLinkForm
       };
     };
 
+    // Aguardar um pouco para garantir que getUserData esteja disponível
+    const timeoutId = setTimeout(() => {
+      detectUserHandle();
+    }, 100);
+
+    // Tentar também imediatamente
     detectUserHandle();
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   const handleSubmit = (e: React.FormEvent) => {

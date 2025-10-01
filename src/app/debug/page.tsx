@@ -25,22 +25,49 @@ interface MessageInfo {
 export default function DebugPage() {
   const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
   const [messages, setMessages] = useState<MessageInfo[]>([]);
+  const [userDataResult, setUserDataResult] = useState<any>(null);
 
   useEffect(() => {
     // Coletar todas as informações possíveis
-    const info: DebugInfo = {
-      url: window.location.href,
-      queryParams: Object.fromEntries(new URLSearchParams(window.location.search)),
-      hash: window.location.hash,
-      referrer: document.referrer,
-      userAgent: navigator.userAgent,
-      isInIframe: window.parent !== window,
-      windowName: window.name,
-      cookies: document.cookie,
-      localStorage: {},
-      sessionStorage: {},
-      timestamp: new Date().toISOString()
-    };
+    const collectInfo = async () => {
+      const info: DebugInfo = {
+        url: window.location.href,
+        queryParams: Object.fromEntries(new URLSearchParams(window.location.search)),
+        hash: window.location.hash,
+        referrer: document.referrer,
+        userAgent: navigator.userAgent,
+        isInIframe: window.parent !== window,
+        windowName: window.name,
+        cookies: document.cookie,
+        localStorage: {},
+        sessionStorage: {},
+        timestamp: new Date().toISOString()
+      };
+
+      // Verificar se getUserData está disponível
+      if (typeof (window as any).getUserData === 'function') {
+        try {
+          console.log('Função getUserData encontrada! Chamando...');
+          const userData = await (window as any).getUserData();
+          setUserDataResult({
+            success: true,
+            data: userData,
+            timestamp: new Date().toISOString()
+          });
+        } catch (error) {
+          setUserDataResult({
+            success: false,
+            error: error instanceof Error ? error.message : String(error),
+            timestamp: new Date().toISOString()
+          });
+        }
+      } else {
+        setUserDataResult({
+          success: false,
+          error: 'Função getUserData não encontrada',
+          timestamp: new Date().toISOString()
+        });
+      }
 
     // Tentar ler localStorage
     try {
@@ -66,7 +93,10 @@ export default function DebugPage() {
       info.sessionStorage = { error: 'Erro ao acessar' };
     }
 
-    setDebugInfo(info);
+      setDebugInfo(info);
+    };
+
+    collectInfo();
 
     // Escutar todas as mensagens
     const handleMessage = (event: MessageEvent) => {
@@ -115,6 +145,19 @@ export default function DebugPage() {
           <pre className="bg-gray-100 p-4 rounded overflow-auto text-xs">
             {JSON.stringify(debugInfo, null, 2)}
           </pre>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6 mb-6">
+          <h2 className="text-lg font-semibold mb-4">Resultado de getUserData()</h2>
+          {userDataResult ? (
+            <pre className={`p-4 rounded overflow-auto text-xs ${
+              userDataResult.success ? 'bg-green-50' : 'bg-red-50'
+            }`}>
+              {JSON.stringify(userDataResult, null, 2)}
+            </pre>
+          ) : (
+            <p className="text-gray-500">Verificando disponibilidade de getUserData()...</p>
+          )}
         </div>
 
         <div className="bg-white rounded-lg shadow p-6">
