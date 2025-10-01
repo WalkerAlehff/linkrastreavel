@@ -44,27 +44,44 @@ export default function DebugPage() {
         timestamp: new Date().toISOString()
       };
 
-      // Verificar se getUserData está disponível
-      if (typeof (window as any).getUserData === 'function') {
+      // Verificar se a API Infinitepay está disponível
+      let attempts = 0;
+      const maxAttempts = 20; // 2 segundos max
+
+      while (!(window as any).Infinitepay && attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempts++;
+      }
+
+      if ((window as any).Infinitepay && typeof (window as any).Infinitepay.getUserData === 'function') {
         try {
-          console.log('Função getUserData encontrada! Chamando...');
-          const userData = await (window as any).getUserData();
+          console.log('API Infinitepay encontrada! Chamando getUserData()...');
+          const response = await (window as any).Infinitepay.getUserData();
+          
           setUserDataResult({
-            success: true,
-            data: userData,
+            success: response?.status === 'success',
+            apiAvailable: true,
+            response: response,
+            userData: response?.data,
+            attempts: attempts,
             timestamp: new Date().toISOString()
           });
         } catch (error) {
           setUserDataResult({
             success: false,
+            apiAvailable: true,
             error: error instanceof Error ? error.message : String(error),
+            attempts: attempts,
             timestamp: new Date().toISOString()
           });
         }
       } else {
         setUserDataResult({
           success: false,
-          error: 'Função getUserData não encontrada',
+          apiAvailable: false,
+          error: 'API Infinitepay não encontrada após ' + attempts + ' tentativas',
+          windowKeys: Object.keys(window).filter(k => k.toLowerCase().includes('infinite')),
+          attempts: attempts,
           timestamp: new Date().toISOString()
         });
       }
@@ -148,15 +165,15 @@ export default function DebugPage() {
         </div>
 
         <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4">Resultado de getUserData()</h2>
+          <h2 className="text-lg font-semibold mb-4">Resultado de window.Infinitepay.getUserData()</h2>
           {userDataResult ? (
             <pre className={`p-4 rounded overflow-auto text-xs ${
-              userDataResult.success ? 'bg-green-50' : 'bg-red-50'
+              userDataResult.success ? 'bg-green-50' : userDataResult.apiAvailable ? 'bg-yellow-50' : 'bg-red-50'
             }`}>
               {JSON.stringify(userDataResult, null, 2)}
             </pre>
           ) : (
-            <p className="text-gray-500">Verificando disponibilidade de getUserData()...</p>
+            <p className="text-gray-500">Verificando disponibilidade da API Infinitepay...</p>
           )}
         </div>
 

@@ -27,34 +27,48 @@ export default function PaymentLinkForm({ onSubmit, isLoading }: PaymentLinkForm
       console.log('Referrer:', document.referrer);
       console.log('Em iframe?:', window.parent !== window);
       
-      // Método 1: Tentar usar getUserData() da InfinitePay
-      if (typeof (window as any).getUserData === 'function') {
-        try {
-          console.log('Função getUserData encontrada! Chamando...');
-          const userData = await (window as any).getUserData();
-          console.log('Dados do usuário recebidos:', userData);
+      // Método 1: Usar a API oficial window.Infinitepay.getUserData()
+      try {
+        // Aguardar a injeção da API pela InfinitePay (padrão da documentação)
+        let attempts = 0;
+        const maxAttempts = 20; // 2 segundos max
+
+        while (!(window as any).Infinitepay && attempts < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+          attempts++;
+        }
+
+        if ((window as any).Infinitepay && typeof (window as any).Infinitepay.getUserData === 'function') {
+          console.log('API Infinitepay encontrada! Chamando getUserData()...');
           
-          if (userData) {
-            // Verificar diferentes propriedades possíveis para o handle
-            const handle = userData.handle || 
-                          userData.username || 
-                          userData.user || 
-                          userData.merchant ||
-                          userData.seller ||
-                          userData.vendedor;
+          const response = await (window as any).Infinitepay.getUserData();
+          console.log('Resposta da API:', response);
+          
+          // Verificar se a resposta foi bem-sucedida
+          if (response && response.status === 'success' && response.data) {
+            const userData = response.data;
+            console.log('Dados do usuário:', userData);
+            
+            // Pegar o handle do usuário
+            const handle = userData.handle || userData.username || userData.user;
             
             if (handle) {
-              setRecipientHandle(String(handle).replace('@', ''));
+              setRecipientHandle(String(handle).replace('@', '').replace('$', ''));
               setIsHandleAutoDetected(true);
-              console.log('Handle detectado via getUserData():', handle);
+              console.log('Handle detectado via Infinitepay.getUserData():', handle);
+              
+              // Salvar no sessionStorage para futuras sessões
+              sessionStorage.setItem('userHandle', handle);
               return;
             }
+          } else if (response && response.status === 'error') {
+            console.error('Erro na resposta da API:', response.message);
           }
-        } catch (error) {
-          console.error('Erro ao chamar getUserData():', error);
+        } else {
+          console.log('API Infinitepay não disponível após', attempts, 'tentativas');
         }
-      } else {
-        console.log('Função getUserData() não encontrada no window');
+      } catch (error) {
+        console.error('Erro ao chamar Infinitepay.getUserData():', error);
       }
       
       // Método 2: Verificar query parameters
