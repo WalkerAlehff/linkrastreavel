@@ -2,13 +2,33 @@
 
 import { useEffect, useState } from 'react';
 
+interface DebugInfo {
+  url: string;
+  queryParams: Record<string, string>;
+  hash: string;
+  referrer: string;
+  userAgent: string;
+  isInIframe: boolean;
+  windowName: string;
+  cookies: string;
+  localStorage: Record<string, string | null>;
+  sessionStorage: Record<string, string | null>;
+  timestamp: string;
+}
+
+interface MessageInfo {
+  origin: string;
+  data: any;
+  timestamp: string;
+}
+
 export default function DebugPage() {
-  const [debugInfo, setDebugInfo] = useState<any>({});
-  const [messages, setMessages] = useState<any[]>([]);
+  const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
+  const [messages, setMessages] = useState<MessageInfo[]>([]);
 
   useEffect(() => {
     // Coletar todas as informações possíveis
-    const info = {
+    const info: DebugInfo = {
       url: window.location.href,
       queryParams: Object.fromEntries(new URLSearchParams(window.location.search)),
       hash: window.location.hash,
@@ -31,7 +51,7 @@ export default function DebugPage() {
         }
       }
     } catch (e) {
-      info.localStorage = 'Erro ao acessar';
+      info.localStorage = { error: 'Erro ao acessar' };
     }
 
     // Tentar ler sessionStorage
@@ -43,7 +63,7 @@ export default function DebugPage() {
         }
       }
     } catch (e) {
-      info.sessionStorage = 'Erro ao acessar';
+      info.sessionStorage = { error: 'Erro ao acessar' };
     }
 
     setDebugInfo(info);
